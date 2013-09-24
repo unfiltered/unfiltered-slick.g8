@@ -32,7 +32,7 @@ class Breeds(tag: Tag) extends Table[Breed](tag, "BREED") {
 }
 
 object setup {
-  val db = Database.forURL("jdbc:h2:mem:test", driver = "org.h2.Driver")
+  val db = Database.forURL("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
 
   def Dogs = TableQuery[Dogs]
   def Breeds = TableQuery[Breeds]

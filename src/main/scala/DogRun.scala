@@ -10,12 +10,14 @@ import setup._
 object DogRun extends unfiltered.filter.Plan {
   def intent = {
     case _ => 
-      val output = db.withTransaction { implicit session =>
-        (for {
-          breed <- Breeds
-          dog <- Dogs if dog.breedId === breed.id
-        } yield (dog, breed)).list
+      db.withTransaction { implicit session =>
+        Html5(
+          <select> {
+            Breeds.list.map { breed =>
+              <option value={breed.id.toString}>{breed.name}</option>
+            }
+          } </select>
+        )
       }
-      ResponseString(output.mkString("\n"))
   }
 }
