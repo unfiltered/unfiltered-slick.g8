@@ -10,23 +10,25 @@ import setup._
 
 object DogRun extends unfiltered.filter.Plan {
 
-  def asBreed = data.Fallible[Int,Breed] { id =>
-    db.withSession { implicit sess =>
-      Breeds.filter { _.id === id }.list.headOption
+  def asBreed(implicit sess: Session) = data.Fallible[Int,Breed] { id =>
+    Breeds.filter { _.id === id }.list.headOption
+  }
+
+  implicit def implyBreed(implicit sess: Session) =
+    data.as.String ~> data.as.Int ~> asBreed
+
+  def intent = { case req =>
+    db.withSession { implicit session =>
+    unfiltered.filter.Intent { Directive.Intent {
+      case _ =>
+        for (breed <- data.as.Option[Breed] named "breed_id")
+        yield page(breed)
+    } } (req)
     }
   }
 
-  implicit def implyBreed =
-    data.as.String ~> data.as.Int ~> asBreed
-
-  def intent = Directive.Intent {
-    case _ =>
-      for (breed <- data.as.Option[Breed] named "breed_id")
-      yield page(breed)
-  }
-
-  def page(breed: Option[Breed]) =
-    Html5(db.withSession { implicit session =>
+  def page(breed: Option[Breed])(implicit sess: Session) =
+    Html5(
       <html>
       <body>
         <form method="get">
@@ -38,7 +40,7 @@ object DogRun extends unfiltered.filter.Plan {
       </form>
       </body>
       </html>
-    })
+    )
 
   def breedSelect(implicit sess: Session) =
     <select name="breed_id"> {
