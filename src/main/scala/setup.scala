@@ -20,13 +20,17 @@ case class Dog(id: Int, name: String, breedId: Int)
 
 // schema description
 class Dogs(tag: Tag) extends Table[Dog](tag, "DOG") {
-  def id = column[Int]("ID")
+  def id = column[Int]("ID", O.PrimaryKey, O.AutoInc)
   def name = column[String]("NAME")
   def breedId = column[Int]("BREED_ID")
   def * = (id, name, breedId) <> (Dog.tupled, Dog.unapply)
+  def forInsert = (name, breedId) <> (
+    { t: (String,Int) => Dog(0, t._1, t._2)},
+    { (u: Dog) => Some(u.name, u.breedId)}
+  )
 }
 class Breeds(tag: Tag) extends Table[Breed](tag, "BREED") {
-  def id = column[Int]("ID")
+  def id = column[Int]("ID", O.PrimaryKey, O.AutoInc)
   def name = column[String]("NAME")
   def * = (id, name) <> (Breed.tupled, Breed.unapply)
 }
@@ -37,18 +41,21 @@ object setup {
   def Dogs = TableQuery[Dogs]
   def Breeds = TableQuery[Breeds]
 
+  def BreedsForInsert = Breeds.map { b => b.name }
+  def DogsForInsert = Dogs.map { d => (d.name, d.breedId) }
+
   def initDb(implicit session: Session): Unit = {
     (Breeds.ddl ++ Dogs.ddl).create
 
-    Breeds ++= Seq(
-      Breed(1, "Collie"),
-      Breed(2, "Terrier")
+    BreedsForInsert ++= Seq(
+      "Collie",
+      "Terrier"
     )
 
-    Dogs ++= Seq(
-      Dog(1, "Lassie", 1),
-      Dog(2, "Toto", 2),
-      Dog(3, "Wishbone", 2)
+    DogsForInsert ++= Seq(
+      ("Lassie", 1),
+      ("Toto", 2),
+      ("Wishbone", 2)
     )
   }
 }
