@@ -10,42 +10,65 @@ import setup._
 
 object DogRun extends unfiltered.filter.Plan {
 
-  def asBreed(implicit sess: Session) = data.Fallible[Int,Breed] { id =>
-    Breeds.filter { _.id === id }.list.headOption
-  }
+  def dogsOfBreed(breed: Breed) =
+    for (dog <- Dogs if dog.breedId === breed.id)
+    yield dog
 
-  implicit def implyBreed(implicit sess: Session) =
-    data.as.String ~> data.as.Int ~> asBreed
+  def breedOfId(id: Int) =
+    Breeds.filter { _.id === id }
 
-  def intent = { case req =>
-    db.withSession { implicit session =>
-    unfiltered.filter.Intent { Directive.Intent {
-      case _ =>
-        for (breed <- data.as.Option[Breed] named "breed_id")
-        yield page(breed)
-    } } (req)
+  object IdBreed {
+    def unapply(idStr: String)(implicit sess: Session) = {
+      for {
+        id <- scala.util.Try { idStr.toInt }.toOption
+        breed <- breedOfId(id).list.headOption
+      } yield breed
     }
   }
 
-  def page(breed: Option[Breed])(implicit sess: Session) =
+  def SlickIntent[A,B](intent: Session => unfiltered.Cycle.Intent[A,B]):
+      unfiltered.Cycle.Intent[A,B] = {
+    case req =>
+      db.withSession { implicit session =>
+        Pass.fold(
+          intent(session),
+          (_: HttpRequest[A]) => Pass,
+          (req: HttpRequest[A], rf: ResponseFunction[B]) =>
+            rf
+        )(req)
+      }
+  }
+
+
+  def intent = SlickIntent { implicit session =>
+    {
+      case Path("/") =>
+        page("Breeds")(breedList)
+      case Path(Seg("breed" :: IdBreed(breed) :: Nil)) =>
+        page(breed.name)(dogList(breed))
+    }
+  }
+
+  def page(title: String)(content: scala.xml.NodeSeq)(implicit sess: Session) =
     Html5(
       <html>
       <body>
-        <form method="get">
-        <div>{ breedSelect }</div>
-        { breed.toSeq.map { b =>
-          <div>{ b.name }</div>
-        } }
-        <input type="submit" />
-      </form>
+        <h1>{ title}</h1>
+        { content }
       </body>
       </html>
     )
 
-  def breedSelect(implicit sess: Session) =
-    <select name="breed_id"> {
+  def breedList(implicit sess: Session) =
+    <ul> {
       Breeds.list.map { breed =>
-        <option value={breed.id.toString}>{breed.name}</option>
+        <li><a href={"/breed/" + breed.id.toString}>{breed.name}</a></li>
       }
-    } </select>
+    } </ul>
+
+  def dogList(breed: Breed)(implicit sess: Session) =
+    <ul> {
+      for (dog <- dogsOfBreed(breed).list)
+      yield <li>{dog.name}</li>
+    } </ul>
 }
