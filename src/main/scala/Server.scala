@@ -1,7 +1,7 @@
 package com.example
 
 import scala.slick.driver.H2Driver.simple._
-import setup._
+import SlickSetup._
 
 object Server extends App {
   unfiltered.jetty.Http.anylocal

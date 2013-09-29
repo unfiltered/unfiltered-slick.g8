@@ -6,7 +6,7 @@ import unfiltered.request._
 import unfiltered.response._
 import unfiltered.directives._, Directives._
 
-import setup._
+import SlickSetup._
 
 object DogRun extends unfiltered.filter.Plan {
 
@@ -20,14 +20,6 @@ object DogRun extends unfiltered.filter.Plan {
     def unapply(idStr: String) = scala.util.Try { idStr.toInt }.toOption
   }
 
-  def SlickIntent[A,B](intent: Session => unfiltered.Cycle.Intent[A,B]):
-      unfiltered.Cycle.Intent[A,B] = {
-    case req =>
-      db.withSession { implicit session =>
-        intent(session).lift(req).getOrElse(Pass)
-      }
-  }
-
   def nameParam(errorPage: Option[String] => ResponseFunction[Any]) = {
     def enterName = errorPage(Some("Please enter a name"))
     (data.as.String.trimmed ~>
@@ -36,7 +28,16 @@ object DogRun extends unfiltered.filter.Plan {
     ) named "name"
   }
 
-  def intent = SlickIntent { implicit session =>
+  /** Provides an implicit session for the request-response cycle. */
+  def SlickCycle[A,B](intent: Session => unfiltered.Cycle.Intent[A,B]):
+      unfiltered.Cycle.Intent[A,B] = {
+    case req =>
+      db.withSession { implicit session =>
+        intent(session).lift(req).getOrElse(Pass)
+      }
+  }
+
+  def intent = SlickCycle { implicit session =>
     Directive.Intent.Path {
       case "/" =>
         def breedPage(error: Option[String] = None) =
