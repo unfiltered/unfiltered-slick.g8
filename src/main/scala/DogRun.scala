@@ -30,44 +30,41 @@ object DogRun extends unfiltered.filter.Plan {
       unfiltered.Cycle.Intent[A,B] = {
     case req =>
       db.withSession { implicit session =>
-        Pass.fold(
-          intent(session),
-          (_: HttpRequest[A]) => Pass,
-          (req: HttpRequest[A], rf: ResponseFunction[B]) =>
-            rf
-        )(req)
+        intent(session).lift(req).getOrElse(Pass)
       }
   }
 
 
-  def nameParam(errorPage: Option[String] => ResponseFunction[Any]) = 
-    data.as.String.trimmed ~> data.as.String.nonEmpty.fail (
-      (_,_) => errorPage(Some("Name was empty."))
-    ) named "name"
+  def nameParam(errorPage: Option[String] => ResponseFunction[Any]) = {
+    def ep = errorPage(Some("Please enter a name"))
+    data.as.String.trimmed ~>
+      data.as.String.nonEmpty.fail( (_,_) => ep ) ~>
+      data.Requiring[String].fail( _ => ep ) named "name"
+  }
 
   def intent = SlickIntent { implicit session =>
     Directive.Intent.Path {
       case "/" =>
         def breedPage(error: Option[String] = None) =
-          page("Breeds")(breedList ++ errorMsg(error) ++ entry("Breed"))
+          page("Breeds")(breedList ++ entry(error))
         (for (_ <- GET) yield breedPage()) orElse
         (for {
           _ <- POST
           name <- nameParam(breedPage)
         } yield {
-          BreedsForInsert += name.get // todo: make it not option
+          BreedsForInsert += name
           breedPage()
         })
       case Seg("breed" :: IdBreed(breed) :: Nil) =>
         def dogPage(error: Option[String] = None) =
-          page(breed.name)(dogList(breed) ++ errorMsg(error) ++ entry("Dog"))
+          page(breed.name)(dogList(breed) ++ entry(error))
         (for (_ <- GET)
         yield dogPage()) orElse
         (for {
           _ <- POST
           name <- nameParam(dogPage)
         } yield {
-          DogsForInsert += (name.get, breed.id)
+          DogsForInsert += (name, breed.id)
           dogPage()
         })
     }
@@ -76,32 +73,51 @@ object DogRun extends unfiltered.filter.Plan {
   def page(title: String)(content: scala.xml.NodeSeq)(implicit sess: Session) =
     Html5(
       <html>
+      <head>
+        <meta name="viewport" content="width=320"/>
+        <title>{title}</title>
+        <link rel="stylesheet" type="text/css" href="/css/app.css"/>
+      </head>
       <body>
-        <h1>{ title}</h1>
-        { content }
+        <div id="container">
+          { content }
+        </div>
       </body>
       </html>
     )
 
   def breedList(implicit sess: Session) =
-    <ul> {
-      for (breed <- Breeds.list)
-      yield <li><a href={"/breed/" + breed.id.toString}>{breed.name}</a></li>
-    } </ul>
+    <div>
+      <h1>Breeds</h1>
+      <ul> {
+        for (breed <- Breeds.list)
+        yield <li><a href={"/breed/" + breed.id.toString}>{breed.name}</a></li>
+      } </ul>
+    </div>
 
   def dogList(breed: Breed)(implicit sess: Session) =
-    <ul> {
-      for (dog <- dogsOfBreed(breed).list)
-      yield <li>{dog.name}</li>
-    } </ul>
+    <div>
+      <a href="/">Breeds</a>
+      <h1>{ breed.name }</h1>
+      <ul> {
+        for (dog <- dogsOfBreed(breed).list)
+        yield <li><span>{dog.name}</span></li>
+      } </ul>
+    </div>
 
-  def entry(kind: String)  =
+  def entry(error: Option[String]) = {
+    val autofocus = error.map { _ => xml.Text("true") }
+    <div>
+      {
+        for (e <- error.toSeq)
+        yield <ul><li><span class="error">{e}</span></li></ul>
+      }
+    </div>
     <form method="POST">
-      <div><input type="text" name="name" /></div>
-      <div><input type="submit" value={ "Add " + kind } /></div>
+      <div><input autofocus={ autofocus } type="text" name="name" /></div>
+      <div><a class="button" href="#" onclick="document.forms[0].submit(); return false;">
+        +
+      </a></div>
     </form>
-
-  def errorMsg(error: Option[String]) =
-    for (e <- error.toSeq)
-    yield <div>{e}</div>
+  }
 }
