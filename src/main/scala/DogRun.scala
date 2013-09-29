@@ -10,21 +10,14 @@ import setup._
 
 object DogRun extends unfiltered.filter.Plan {
 
-  def dogsOfBreed(breed: Breed) =
-    for (dog <- Dogs if dog.breedId === breed.id)
-    yield dog
-
-  def breedOfId(id: Int)(implicit session: Session) = {
-    result ( (for (b <- Breeds if b.id === id)
-    yield b).list.headOption.map(Result.Success(_)).getOrElse(
-      Result.Failure(NotFound)
-    ))
-  }
+  def breedOfId(id: Int)(implicit session: Session) =
+    getOrElse(
+      Breeds.ofId(id).firstOption,
+      NotFound ~> ResponseString("Breed not found")
+    )
 
   object BreedId {
-    def unapply(idStr: String)(implicit sess: Session) = {
-      scala.util.Try { idStr.toInt }.toOption
-    }
+    def unapply(idStr: String) = scala.util.Try { idStr.toInt }.toOption
   }
 
   def SlickIntent[A,B](intent: Session => unfiltered.Cycle.Intent[A,B]):
@@ -35,12 +28,12 @@ object DogRun extends unfiltered.filter.Plan {
       }
   }
 
-
   def nameParam(errorPage: Option[String] => ResponseFunction[Any]) = {
-    def ep = errorPage(Some("Please enter a name"))
-    data.as.String.trimmed ~>
-      data.as.String.nonEmpty.fail( (_,_) => ep ) ~>
-      data.Requiring[String].fail( _ => ep ) named "name"
+    def enterName = errorPage(Some("Please enter a name"))
+    (data.as.String.trimmed ~>
+      data.as.String.nonEmpty.fail( (_,_) => enterName ) ~>
+      data.Requiring[String].fail( _ => enterName )
+    ) named "name"
   }
 
   def intent = SlickIntent { implicit session =>
@@ -53,7 +46,7 @@ object DogRun extends unfiltered.filter.Plan {
           _ <- POST
           name <- nameParam(breedPage)
         } yield {
-          BreedsForInsert += name
+          Breeds.forInsert += name
           breedPage()
         })
       case Seg("breed" :: BreedId(breedId) :: Nil) =>
@@ -69,7 +62,7 @@ object DogRun extends unfiltered.filter.Plan {
           breed <- breedOfId(breedId)
           name <- nameParam(dogPage(breed, _))
         } yield {
-          DogsForInsert += (name, breed.id)
+          Dogs.forInsert += (name, breed.id)
           dogPage(breed)
         })
     }
@@ -105,7 +98,7 @@ object DogRun extends unfiltered.filter.Plan {
       <a href="/">Breeds</a>
       <h1>{ breed.name }</h1>
       <ul> {
-        for (dog <- dogsOfBreed(breed).list)
+        for (dog <- Dogs.ofBreed(breed).list)
         yield <li><span>{dog.name}</span></li>
       } </ul>
     </div>

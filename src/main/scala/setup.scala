@@ -41,18 +41,30 @@ object setup {
   def Dogs = TableQuery[Dogs]
   def Breeds = TableQuery[Breeds]
 
-  def BreedsForInsert = Breeds.map { b => b.name }
-  def DogsForInsert = Dogs.map { d => (d.name, d.breedId) }
+  implicit class BreedsExtensions(val breeds: Query[Breeds, Breed]) extends AnyVal{
+    def ofId(id: Int) =
+      for (b <- Breeds if b.id === id)
+      yield b
+    def forInsert = Breeds.map { b => b.name }
+  }
+
+  implicit class DogsExtensions(val breeds: Query[Dogs, Dog]) extends AnyVal{
+    def ofBreed(breed: Breed) =
+      for (d <- Dogs if d.breedId === breed.id)
+      yield d
+
+    def forInsert = Dogs.map { d => (d.name, d.breedId) }
+  }
 
   def initDb(implicit session: Session): Unit = {
     (Breeds.ddl ++ Dogs.ddl).create
 
-    BreedsForInsert ++= Seq(
+    Breeds.forInsert ++= Seq(
       "Collie",
       "Terrier"
     )
 
-    DogsForInsert ++= Seq(
+    Dogs.forInsert ++= Seq(
       ("Lassie", 1),
       ("Toto", 2),
       ("Wishbone", 2)
