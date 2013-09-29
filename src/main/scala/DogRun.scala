@@ -14,15 +14,16 @@ object DogRun extends unfiltered.filter.Plan {
     for (dog <- Dogs if dog.breedId === breed.id)
     yield dog
 
-  def breedOfId(id: Int) =
-    Breeds.filter { _.id === id }
+  def breedOfId(id: Int)(implicit session: Session) = {
+    result ( (for (b <- Breeds if b.id === id)
+    yield b).list.headOption.map(Result.Success(_)).getOrElse(
+      Result.Failure(NotFound)
+    ))
+  }
 
-  object IdBreed {
+  object BreedId {
     def unapply(idStr: String)(implicit sess: Session) = {
-      for {
-        id <- scala.util.Try { idStr.toInt }.toOption
-        breed <- breedOfId(id).list.headOption
-      } yield breed
+      scala.util.Try { idStr.toInt }.toOption
     }
   }
 
@@ -55,17 +56,21 @@ object DogRun extends unfiltered.filter.Plan {
           BreedsForInsert += name
           breedPage()
         })
-      case Seg("breed" :: IdBreed(breed) :: Nil) =>
-        def dogPage(error: Option[String] = None) =
+      case Seg("breed" :: BreedId(breedId) :: Nil) =>
+        def dogPage(breed: Breed, error: Option[String] = None) =
           page(breed.name)(dogList(breed) ++ entry(error))
-        (for (_ <- GET)
-        yield dogPage()) orElse
+        (for {
+          _ <- GET
+          _ <- commit
+          breed <- breedOfId(breedId)
+        } yield dogPage(breed)) orElse
         (for {
           _ <- POST
-          name <- nameParam(dogPage)
+          breed <- breedOfId(breedId)
+          name <- nameParam(dogPage(breed, _))
         } yield {
           DogsForInsert += (name, breed.id)
-          dogPage()
+          dogPage(breed)
         })
     }
   }
