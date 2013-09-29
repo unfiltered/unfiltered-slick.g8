@@ -2,9 +2,9 @@ organization := "com.typesafe.slick"
 
 name := "slick-presentation"
 
-version := "2.0.0-M2"
+version := "0.1.0-SNAPSHOT"
 
-scalaVersion := "2.10.2"
+scalaVersion := "$scala_version$"
 
 scalacOptions += "-deprecation"
 
@@ -14,10 +14,10 @@ scalacOptions += "-deprecation"
 libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _)
 
 libraryDependencies ++= List(
-  "net.databinder" %% "unfiltered-directives" % "0.7.0",
-  "net.databinder" %% "unfiltered-filter" % "0.7.0",
-  "net.databinder" %% "unfiltered-jetty" % "0.7.0",
-  "com.typesafe.slick" %% "slick" % "2.0.0-M2",
+  "net.databinder" %% "unfiltered-directives" % "$unfiltered_version$",
+  "net.databinder" %% "unfiltered-filter" % "$unfiltered_version$",
+  "net.databinder" %% "unfiltered-jetty" % "$unfiltered_version$",
+  "com.typesafe.slick" %% "slick" % "$slick_version$",
   "org.slf4j" % "slf4j-nop" % "1.6.4",
   "com.h2database" % "h2" % "1.3.166",
   "org.xerial" % "sqlite-jdbc" % "3.7.2"
