@@ -8,11 +8,6 @@ scalaVersion := "$scala_version$"
 
 scalacOptions += "-deprecation"
 
-// scala-compiler is declared as an optional dependency by Slick.
-// You need to add it explicitly to your own project if you want
-// to use the direct embedding (as in SimpleExample.scala here).
-libraryDependencies <+= (scalaVersion)("org.scala-lang" % "scala-compiler" % _)
-
 libraryDependencies ++= List(
   "net.databinder" %% "unfiltered-directives" % "$unfiltered_version$",
   "net.databinder" %% "unfiltered-filter" % "$unfiltered_version$",
