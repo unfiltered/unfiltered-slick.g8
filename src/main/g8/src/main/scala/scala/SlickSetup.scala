@@ -1,6 +1,7 @@
 package com.example
 
 import scala.slick.driver.H2Driver.simple._
+import com.mchange.v2.c3p0.ComboPooledDataSource
 
 /*
   Example Data Model
@@ -37,13 +38,11 @@ object SlickSetup {
   }
 
  
-  val db = {
-    import com.mchange.v2.c3p0.ComboPooledDataSource
-    val ds = new ComboPooledDataSource
-    ds.setDriverClass("org.h2.Driver")
-    ds.setJdbcUrl("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1")
-    Database.forDataSource(ds)
-  }
+  val datasource = new ComboPooledDataSource
+  datasource.setDriverClass("org.h2.Driver")
+  datasource.setJdbcUrl("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1")
+
+  val db = Database.forDataSource(datasource)
 
   def Dogs = TableQuery[Dogs]
   def Breeds = TableQuery[Breeds]

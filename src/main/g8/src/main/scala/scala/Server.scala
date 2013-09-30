@@ -10,5 +10,7 @@ object Server extends App {
     .run({ svr =>
       db.withSession(initDb(_))
       unfiltered.util.Browser.open(svr.url)
+    }, { svr =>
+      datasource.close()
     })
 }
