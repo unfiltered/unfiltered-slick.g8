@@ -36,7 +36,14 @@ object SlickSetup {
     def * = (id, name) <> (Breed.tupled, Breed.unapply)
   }
 
-  val db = Database.forURL("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
+ 
+  val db = {
+    import com.mchange.v2.c3p0.ComboPooledDataSource
+    val ds = new ComboPooledDataSource
+    ds.setDriverClass("org.h2.Driver")
+    ds.setJdbcUrl("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1")
+    Database.forDataSource(ds)
+  }
 
   def Dogs = TableQuery[Dogs]
   def Breeds = TableQuery[Breeds]
