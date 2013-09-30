@@ -89,7 +89,7 @@ object DogRun extends unfiltered.filter.Plan {
     <div>
       <h1>Breeds</h1>
       <ul> {
-        for (breed <- Breeds.list)
+        for (breed <- Breeds.sortBy(_.name).list)
         yield <li><a href={"/breed/" + breed.id.toString}>{breed.name}</a></li>
       } </ul>
     </div>
@@ -99,7 +99,7 @@ object DogRun extends unfiltered.filter.Plan {
       <a href="/">Breeds</a>
       <h1>{ breed.name }</h1>
       <ul> {
-        for (dog <- Dogs.ofBreed(breed).list)
+        for (dog <- Dogs.ofBreed(breed).sortBy(_.name).list)
         yield <li><span>{dog.name}</span></li>
       } </ul>
     </div>
