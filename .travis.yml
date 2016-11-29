@@ -1,4 +1,8 @@
 language: scala
-
+sudo: false
+jdk: oraclejdk7
+scala:
+  - 2.10.6
+  # TODO update slick and Scala 2.11 support
 script:
-  - sbt g8Test
+  - sbt ";set g8Properties in g8 in Test ~= { _ + (\"scala_version\" -> \"$TRAVIS_SCALA_VERSION\")}; g8Test"
