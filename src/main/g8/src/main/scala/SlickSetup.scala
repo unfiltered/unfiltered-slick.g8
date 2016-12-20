@@ -1,7 +1,10 @@
 package com.example
 
-import scala.slick.driver.H2Driver.simple._
+import slick.driver.H2Driver.api._
 import com.mchange.v2.c3p0.ComboPooledDataSource
+
+import scala.concurrent.{Await, Future}
+import scala.concurrent.duration._
 
 /*
   Example Data Model
@@ -47,14 +50,14 @@ object SlickSetup {
   def Dogs = TableQuery[Dogs]
   def Breeds = TableQuery[Breeds]
 
-  implicit class BreedsExtensions(val breeds: Query[Breeds, Breed]) extends AnyVal{
+  implicit class BreedsExtensions(val breeds: Query[Breeds, Breed, Seq]) extends AnyVal{
     def ofId(id: Int) =
       for (b <- Breeds if b.id === id)
       yield b
     def forInsert = Breeds.map { b => b.name }
   }
 
-  implicit class DogsExtensions(val breeds: Query[Dogs, Dog]) extends AnyVal{
+  implicit class DogsExtensions(val breeds: Query[Dogs, Dog, Seq]) extends AnyVal{
     def ofBreed(breed: Breed) =
       for (d <- Dogs if d.breedId === breed.id)
       yield d
@@ -62,18 +65,21 @@ object SlickSetup {
     def forInsert = Dogs.map { d => (d.name, d.breedId) }
   }
 
-  def initDb(implicit session: Session): Unit = {
-    (Breeds.ddl ++ Dogs.ddl).create
+  def initDb(): Unit = {
+    import scala.concurrent.ExecutionContext.Implicits.global
+    val result = Seq(
+      (Breeds.schema ++ Dogs.schema).create,
+      Breeds.forInsert ++= Seq(
+        "Collie",
+        "Terrier"
+      ),
+      Dogs.forInsert ++= Seq(
+        ("Lassie", 1),
+        ("Toto", 2),
+        ("Wishbone", 2)
+      )
+    ).map(db.run(_))
 
-    Breeds.forInsert ++= Seq(
-      "Collie",
-      "Terrier"
-    )
-
-    Dogs.forInsert ++= Seq(
-      ("Lassie", 1),
-      ("Toto", 2),
-      ("Wishbone", 2)
-    )
+    Await.result(Future.sequence(result), 5.seconds)
   }
 }
