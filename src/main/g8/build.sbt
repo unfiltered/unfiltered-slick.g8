@@ -8,10 +8,12 @@ scalaVersion := "$scala_version$"
 
 scalacOptions += "-deprecation"
 
+val unfilteredVersion = "$unfiltered_version$"
+
 libraryDependencies ++= List(
-  "net.databinder" %% "unfiltered-directives" % "$unfiltered_version$",
-  "net.databinder" %% "unfiltered-filter" % "$unfiltered_version$",
-  "net.databinder" %% "unfiltered-jetty" % "$unfiltered_version$",
+  "net.databinder" %% "unfiltered-directives" % unfilteredVersion,
+  "net.databinder" %% "unfiltered-filter" % unfilteredVersion,
+  "net.databinder" %% "unfiltered-jetty" % unfilteredVersion,
   "com.typesafe.slick" %% "slick" % "$slick_version$",
   "org.slf4j" % "slf4j-nop" % "1.6.4",
   "c3p0" % "c3p0" % "0.9.1.2",
