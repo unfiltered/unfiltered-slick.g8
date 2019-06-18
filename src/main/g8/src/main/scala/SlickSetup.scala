@@ -45,7 +45,7 @@ object SlickSetup {
   datasource.setDriverClass("org.h2.Driver")
   datasource.setJdbcUrl("jdbc:h2:mem:test;DB_CLOSE_DELAY=-1")
 
-  val db = Database.forDataSource(datasource)
+  val db = Database.forDataSource(datasource, None)
 
   def Dogs = TableQuery[Dogs]
   def Breeds = TableQuery[Breeds]
