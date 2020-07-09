@@ -4,7 +4,7 @@ jdk: openjdk8
 scala:
   - 2.11.12
   - 2.12.11
-  - 2.13.1
+  - 2.13.3
 script:
   - sbt ";set g8Properties in g8 in Test ~= { _ + (\"scala_version\" -> \"$TRAVIS_SCALA_VERSION\")}; g8Test"
 cache:
