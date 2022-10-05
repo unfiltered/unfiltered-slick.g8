@@ -12,8 +12,8 @@ jobs:
       matrix:
         include:
           - scala: 2.11.12
-          - scala: 2.12.13
-          - scala: 2.13.5
+          - scala: 2.12.17
+          - scala: 2.13.9
     steps:
     - uses: actions/setup-java@v3
       with:
