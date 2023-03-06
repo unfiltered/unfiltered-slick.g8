@@ -42,7 +42,7 @@ object DogRun extends unfiltered.filter.Plan {
     Directive.Intent.Path {
       case "/" =>
         def breedPage(error: Option[String] = None) =
-          page("Breeds")(breedList ++ entry(error))
+          page("Breeds")(breedList() ++ entry(error))
         (for (_ <- GET) yield breedPage()) orElse
         (for {
           _ <- POST
