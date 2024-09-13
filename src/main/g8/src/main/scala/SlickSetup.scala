@@ -1,6 +1,6 @@
 package com.example
 
-import slick.driver.H2Driver.api._
+import slick.jdbc.H2Profile.api._
 import com.mchange.v2.c3p0.ComboPooledDataSource
 
 import scala.concurrent.{Await, Future}

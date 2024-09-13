@@ -1,6 +1,6 @@
 package com.example
 
-import slick.driver.H2Driver.api._
+import slick.jdbc.H2Profile.api._
 import unfiltered.request._
 import unfiltered.response._
 import unfiltered.directives._
