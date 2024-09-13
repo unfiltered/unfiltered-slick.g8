@@ -26,9 +26,9 @@ libraryDependencies ++= List(
   "ws.unfiltered" %% "unfiltered-filter" % unfilteredVersion,
   "ws.unfiltered" %% "unfiltered-jetty" % unfilteredVersion,
   "com.typesafe.slick" %% "slick" % "$slick_version$",
-  "org.slf4j" % "slf4j-nop" % "1.6.4",
+  "org.slf4j" % "slf4j-nop" % "2.0.16",
   "c3p0" % "c3p0" % "0.9.1.2",
-  "com.h2database" % "h2" % "1.3.166"
+  "com.h2database" % "h2" % "2.3.232"
 /*
   "org.xerial" % "sqlite-jdbc" % "3.7.2",
   "org.apache.derby" % "derby" % "10.9.1.0",
