@@ -67,19 +67,26 @@ object SlickSetup {
 
   def initDb(): Unit = {
     import scala.concurrent.ExecutionContext.Implicits.global
-    val result = Seq(
-      (Breeds.schema ++ Dogs.schema).create,
-      Breeds.forInsert ++= Seq(
-        "Collie",
-        "Terrier"
-      ),
-      Dogs.forInsert ++= Seq(
-        ("Lassie", 1),
-        ("Toto", 2),
-        ("Wishbone", 2)
-      )
-    ).map(db.run(_))
 
-    Await.result(Future.sequence(result), 5.seconds)
+    Await.result(
+      db.run((Breeds.schema ++ Dogs.schema).create),
+      5.seconds
+    )
+
+    val result = Future.sequence(
+      Seq(
+        Breeds.forInsert ++= Seq(
+          "Collie",
+          "Terrier"
+        ),
+        Dogs.forInsert ++= Seq(
+          ("Lassie", 1),
+          ("Toto", 2),
+          ("Wishbone", 2)
+        )
+      ).map(db.run(_))
+    )
+
+    Await.result(result, 5.seconds)
   }
 }
