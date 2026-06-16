@@ -30,7 +30,7 @@ object SlickSetup {
     def breedId = column[Int]("BREED_ID")
     def * = (id, name, breedId) <> (Dog.tupled, Dog.unapply)
     def forInsert = (name, breedId) <> (
-      { t: (String,Int) => Dog(0, t._1, t._2)},
+      { (t: (String, Int)) => Dog(0, t._1, t._2)},
       { (u: Dog) => Some(u.name -> u.breedId)}
     )
   }
